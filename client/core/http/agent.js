@@ -361,6 +361,15 @@ export default class Agent extends ns.Core.Interface.HttpAgent {
 			agentResponse.params.url,
 			agentResponse.params.data
 		);
+		
+		if ((!response.body || typeof response.body === 'object' && Object.keys(response.body).length === 0) && 
+			typeof(response.text) === 'string' && response.text !== '') {
+			try {
+				agentResponse.body = JSON.parse(response.text);	
+			} catch (e) {
+				agentResponse.body = null;
+			}
+		}
 
 		this._internalCacheOfPromises.delete(cacheKey);
 
