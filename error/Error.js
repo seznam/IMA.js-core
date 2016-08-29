@@ -47,6 +47,17 @@ export default class Error extends ExtensibleError {
 	 * @see getHttpStatus
 	 */
 	getParams() {}
+
+	/**
+	 * Returns error body sent by server
+	 *
+	 * This method is a shorthand for the following code snippet:
+	 * {@code this.getParams().body}.
+	 *
+	 * @method getBody
+	 * @return {Object} Original body of error
+	 */
+	getBody() {}
 }
 
 ns.ima.error.Error = Error;
