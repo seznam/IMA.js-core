@@ -257,10 +257,10 @@ export default class SuperAgentProxy {
 	 * @return {ima.http.SuperAgentProxy} This instance.
 	 */
 	_sendRequest(request, resolve, reject, params) {
-		request.end((error, response) => {
 
+		request.end((error, response) => {
 			if (error) {
-				this._handleError(error, reject, params);
+				this._handleError(error, response, reject, params);
 			} else {
 				this._handleResponse(response, resolve, reject, params);
 			}
@@ -314,42 +314,41 @@ export default class SuperAgentProxy {
 	 *        parameter is actually an {@codelink Error} instance augmented
 	 *        with fields providing additional details (timeout, HTTP status
 	 *        code, etc.).
+	 * @param {Vendor.SuperAgent.Response} response The response object
 	 * @param {function(Object<string, *>)} reject Promise rejection callback
 	 *        to call.
 	 * @param {{method: string, url: string, data: Object<string, (boolean|number|string|Date)>, options: Object<string, *>}} params
 	 *        An object representing the complete request parameters used to
 	 *        create and send the HTTP request.
 	 */
-	_handleError(error, reject, params) {
+	_handleError(error, response, reject, params) {
+		if (typeof response === "undefined") {
+			var response = {}
+		}
+
 		var errorParams = {};
+		var statusCode = 0
+		var { statusText = "", statusType = "", body = null } = response
 
 		if (error.timeout === params.options.timeout) {
-			errorParams = this.getErrorParams(
+			statusCode = this.HTTP_STATUS_CODE.TIMEOUT
+		} else {
+			if (error.crossDomain) {
+				statusCode = this.HTTP_STATUS_CODE.FORBIDDEN
+			} else {
+				statusCode = error.status || this.HTTP_STATUS_CODE.SERVER_ERROR
+			}
+		}
+
+		var errorParams = this.getErrorParams(
 				params.method,
 				params.url,
 				params.data,
 				params.options,
-				this.HTTP_STATUS_CODE.TIMEOUT
+				statusCode
 			);
-		} else {
-			if (error.crossDomain) {
-				errorParams = this.getErrorParams(
-					params.method,
-					params.url,
-					params.data,
-					params.options,
-					this.HTTP_STATUS_CODE.FORBIDDEN
-				);
-			} else {
-				errorParams = this.getErrorParams(
-					params.method,
-					params.url,
-					params.data,
-					params.options,
-					error.status || this.HTTP_STATUS_CODE.SERVER_ERROR
-				);
-			}
-		}
+
+		errorParams.body = body
 
 		reject(errorParams);
 	}
