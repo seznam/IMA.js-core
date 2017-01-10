@@ -117,6 +117,7 @@ export default class SuperAgentProxy {
 				if (method === 'delete') {
 					method = 'del';
 				}
+
 				var request = this._superAgent[method](params.transformedUrl);
 
 				if (method === 'get') {
@@ -169,6 +170,7 @@ export default class SuperAgentProxy {
 	 * @param {string} url The URL to which the request has been made.
 	 * @param {Object<string, (boolean|number|string|Date)>} data The data sent
 	 *        with the request.
+	 * @param {Object} body Body of the error response
 	 * @param {{timeout: number=, ttl: number=, repeatRequest: number=,
 	 *        headers: Object<string, string>=, cache: boolean=,
 	 *        withCredentials: boolean}=} options
@@ -185,9 +187,9 @@ export default class SuperAgentProxy {
 	 * @return {Object<string, *>} An object containing both the details of the
 	 *         error and the request that lead to it.
 	 */
-	getErrorParams(method, url, data, options, status) {
+	getErrorParams(method, url, data, body, options, status) {
 		var params = this._composeRequestParams(method, url, data, options);
-		var error = { status };
+		var error = { status, body };
 
 		switch (status) {
 			case this.HTTP_STATUS_CODE.TIMEOUT:
@@ -257,10 +259,10 @@ export default class SuperAgentProxy {
 	 * @return {ima.http.SuperAgentProxy} This instance.
 	 */
 	_sendRequest(request, resolve, reject, params) {
-		request.end((error, response) => {
 
+		request.end((error, response) => {
 			if (error) {
-				this._handleError(error, reject, params);
+				this._handleError(response, error, reject, params);
 			} else {
 				this._handleResponse(response, resolve, reject, params);
 			}
@@ -310,6 +312,7 @@ export default class SuperAgentProxy {
 	 *
 	 * @method _handleError
 	 * @private
+	 * @param {Vendor.SuperAgent.Error} xxx
 	 * @param {Vendor.SuperAgent.Error} error The encountered error. The
 	 *        parameter is actually an {@codelink Error} instance augmented
 	 *        with fields providing additional details (timeout, HTTP status
@@ -320,36 +323,33 @@ export default class SuperAgentProxy {
 	 *        An object representing the complete request parameters used to
 	 *        create and send the HTTP request.
 	 */
-	_handleError(error, reject, params) {
+	_handleError(response, error, reject, params) {
+		if (typeof response === "undefined") {
+			var response = {}
+		}
+
 		var errorParams = {};
+		var statusCode = 0
+		var { statusText, statusType, body } = response
 
 		if (error.timeout === params.options.timeout) {
-			errorParams = this.getErrorParams(
+			statusCode = this.HTTP_STATUS_CODE.TIMEOUT
+		} else {
+			if (error.crossDomain) {
+				statusCode = this.HTTP_STATUS_CODE.FORBIDDEN
+			} else {
+				statusCode = error.status || this.HTTP_STATUS_CODE.SERVER_ERROR
+			}
+		}
+
+		var errorParams = this.getErrorParams(
 				params.method,
 				params.url,
 				params.data,
+				body,
 				params.options,
-				this.HTTP_STATUS_CODE.TIMEOUT
+				statusCode
 			);
-		} else {
-			if (error.crossDomain) {
-				errorParams = this.getErrorParams(
-					params.method,
-					params.url,
-					params.data,
-					params.options,
-					this.HTTP_STATUS_CODE.FORBIDDEN
-				);
-			} else {
-				errorParams = this.getErrorParams(
-					params.method,
-					params.url,
-					params.data,
-					params.options,
-					error.status || this.HTTP_STATUS_CODE.SERVER_ERROR
-				);
-			}
-		}
 
 		reject(errorParams);
 	}

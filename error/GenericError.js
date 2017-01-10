@@ -33,7 +33,6 @@ export default class GenericError extends Error {
 	 */
 	constructor(message, params = {}, dropInternalStackFrames = true) {
 		super(message, dropInternalStackFrames);
-
 		/**
 		 * The data providing additional details related to this error.
 		 *
@@ -51,6 +50,15 @@ export default class GenericError extends Error {
 	 */
 	getHttpStatus() {
 		return this._params.status || 500;
+	}
+
+	/**
+	 * @inheritdoc
+	 * @override
+	 * @method getBody
+	 */
+	getBody() {
+		return this._params.body || null;
 	}
 
 	/**
