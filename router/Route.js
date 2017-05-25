@@ -326,7 +326,7 @@ export default class Route {
 	_substituteParamInPath(path, paramName, paramValue) {
 		return path.replace(
 			new RegExp(`(^|\/):${paramName}([\/\?]|$)`),
-			paramValue ? '$1' + this._encodePathParamValue(paramValue) +  '$2' : ''
+			paramValue ? '$1' + encodeURIComponent(paramValue) +  '$2' : ''
 		);
 	}
 
@@ -341,27 +341,8 @@ export default class Route {
 	_substituteOptionalParamInPath(path, paramName, paramValue) {
 		return path.replace(
 			new RegExp(`(^|\/):\\\?${paramName}([\/\?]|$)`),
-			paramValue ? '$1' + this._encodePathParamValue(paramValue) +  '$2' : ''
+			paramValue ? '$1' + encodeURIComponent(paramValue) +  '$2' : ''
 		);
-	}
-
-	/**
-	 * Encode special characters of path parameter value.
-	 * 
-	 * @param {string|number} paramValue Path parameter value
-	 * @return {string} Encoded path parameter value.
-	 */
-	_encodePathParamValue(paramValue) {
-		// Percen sing (%) has to be first!
-		const charsToEncode = ['%', '/', '?', '#', ':'];
-
-		let newParamValue = String(paramValue);
-
-		charsToEncode.forEach(char => {
-			newParamValue = newParamValue.replace(char, encodeURIComponent(char));
-		});
-		
-		return newParamValue;
 	}
 
 	/**
