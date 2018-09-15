@@ -163,7 +163,9 @@ export default class AbstractPageManager extends PageManager {
     );
 
     // Run pre-manage handlers before affecting anything
-    await this._runPreManageHandlers(newManagedPage, action);
+    if (!this._isInitialManageCall()) {
+      await this._runPreManageHandlers(newManagedPage, action);
+    }
 
     // Deactivate the old instances and clearing state
     this._deactivatePageSource();
@@ -672,14 +674,28 @@ export default class AbstractPageManager extends PageManager {
   }
 
   /**
+   * Returns true if the page manager isn't managing any page and this is the
+   * first call to manage a page.
    *
+   * @returns {boolean}
+   */
+  _isInitialManageCall() {
+    return (
+      this._managedPage &&
+      this._managedPage.controller === null &&
+      this._managedPage.state.activated === false
+    );
+  }
+
+  /**
+   * Runs pre-manage handlers with required arguments
    *
    * @protected
    * @param {ManagedPage} nextManagedPage
-   * @param {{ type: string, payload: Object|Event}}
+   * @param {{ type: string, event: Event}} action
    * @returns {Promise<any>}
    */
-  async _runPreManageHandlers(nextManagedPage, action) {
+  _runPreManageHandlers(nextManagedPage, action) {
     return this._pageHandlerRegistry.handlePreManagedState(
       this._stripManagedPageValueForPublic(nextManagedPage),
       this._managedPage.controller
@@ -690,10 +706,12 @@ export default class AbstractPageManager extends PageManager {
   }
 
   /**
-   *
+   * Runs post-manage handlers with required arguments
    *
    * @protected
    * @param {ManagedPage} previousManagedPage
+   * @param {{ type: string, event: Event}} action
+   * @returns {Promise<any>}
    */
   _runPostManageHandlers(previousManagedPage, action) {
     return this._pageHandlerRegistry.handlePostManagedState(
