@@ -666,14 +666,12 @@ export default class ObjectContainer {
    *         {@code $dependencies}.
    */
   _getEntryFromClassConstructor(classConstructor) {
-    if (
-      typeof classConstructor === 'function' &&
-      Array.isArray(classConstructor.$dependencies)
-    ) {
-      let entry = this._createEntry(
-        classConstructor,
-        classConstructor.$dependencies
-      );
+    if (typeof classConstructor === 'function') {
+      const classDependencies = Array.isArray(classConstructor.$dependencies)
+        ? classConstructor.$dependencies
+        : [];
+
+      let entry = this._createEntry(classConstructor, classDependencies);
       this._entries.set(classConstructor, entry);
 
       return entry;
