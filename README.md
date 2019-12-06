@@ -1,3 +1,5 @@
+The package was moved to https://github.com/seznam/ima/tree/master/packages/core.
+
 # IMA.js
 
 [![Build Status](https://travis-ci.org/seznam/IMA.js-core.svg?branch=master)](https://travis-ci.org/seznam/IMA.js-core) [![dependencies Status](https://david-dm.org/seznam/IMA.js-core/status.svg)](https://david-dm.org/seznam/IMA.js-core)
